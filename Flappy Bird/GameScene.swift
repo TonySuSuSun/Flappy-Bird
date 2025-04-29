@@ -16,6 +16,8 @@ class GameScene: SKScene {
     var startButton:SKLabelNode!
     var scoreButton:SKLabelNode!
 
+    var isGameStart = false
+    
     func createGround() {
         let ground = SKSpriteNode(imageNamed: "ground.png")
         ground.size = CGSize(width: 1536, height: 768)
@@ -31,7 +33,7 @@ class GameScene: SKScene {
         title.fontColor = UIColor.black
         title.horizontalAlignmentMode = .center
         title.fontSize = 108
-        title.position = CGPoint(x: 512, y: 624)
+        title.position = CGPoint(x: 384, y: 768)
         title.zPosition = 1
         addChild(title)
     }
@@ -42,7 +44,7 @@ class GameScene: SKScene {
         startButton.fontColor = UIColor.black
         startButton.horizontalAlignmentMode = .center
         startButton.fontSize = 72
-        startButton.position = CGPoint(x: 512, y: 384)
+        startButton.position = CGPoint(x: 384, y: 512)
         startButton.zPosition = 1
         addChild(startButton)
     }
@@ -53,7 +55,7 @@ class GameScene: SKScene {
         scoreButton.fontColor = UIColor.black
         scoreButton.horizontalAlignmentMode = .center
         scoreButton.fontSize = 72
-        scoreButton.position = CGPoint(x: 512, y: 276)
+        scoreButton.position = CGPoint(x: 384, y: 372)
         scoreButton.zPosition = 1
         addChild(scoreButton)
     }
@@ -61,8 +63,8 @@ class GameScene: SKScene {
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x:0, y:0)
         let sky = SKSpriteNode(imageNamed: "sky.png")
-        sky.size = CGSize(width: 1536, height: 768)
-        sky.position = CGPoint(x: 512, y: 384)
+        sky.size = CGSize(width: 2048, height: 1024)
+        sky.position = CGPoint(x: 512, y: 512)
         sky.blendMode = .replace
         sky.zPosition = -1
         addChild(sky)
@@ -108,7 +110,7 @@ class GameScene: SKScene {
 
 struct GameView: View {
     var scene: SKScene {
-        let scene = GameScene(size: CGSize(width: 1024, height: 768))
+        let scene = GameScene(size: CGSize(width: 768, height: 1024))
         scene.scaleMode = .aspectFit
         return scene
     }
