@@ -9,53 +9,66 @@ import GameplayKit
 import SpriteKit
 import SwiftUI
 
-class GameScene: SKScene {
-    
-    var ceiling:SKSpriteNode!
-    var ground:SKSpriteNode!
-    var bird:SKSpriteNode!
-    
+class GameScene: SKScene, SKPhysicsContactDelegate {
+
+    var ceiling: SKSpriteNode!  // 天花板(隱形的)
+    var ground: SKSpriteNode!  // 地板
+    var bird: SKSpriteNode!  // 鳥
+
+    // 鳥的動畫素材
     var birdTextureAtlas = SKTextureAtlas()
     var birdTextureArray = [SKTexture]()
-    
-    var title:SKLabelNode!
-    var startButton:SKLabelNode!
-    var scoreButton:SKLabelNode!
 
+    var title: SKLabelNode!  // 遊戲標題(Flappy Bird)
+    var startButton: SKLabelNode!  // 開始按鈕(進入遊戲)
+    var scoreButton: SKLabelNode!  // 計分板按鈕(用於看分數紀錄)
+
+    var hintTitle: SKLabelNode!  // 提示點擊開始遊戲的字(Tab to Start!)
+    var pauseButton: SKLabelNode!  // 暫停按鈕
+
+    var showScore: SKLabelNode!  // 遊戲結束時顯示分數
+    var restartButton: SKLabelNode!  // 重新開始遊戲的按鈕
+    var backButton: SKLabelNode!  // 返回主頁面的按鈕
+
+    // 遊玩分數
     var gameScore: SKLabelNode!
     var score = 0 {
         didSet {
             gameScore.text = "\(score)"
         }
     }
-    
-    var isGameStart = false
-    
-    func createCeiling(){
+
+    var isGameStarted = false  // 檢查遊戲是否已經開始
+    var isInGame = false  // 檢查是否在遊戲內
+    var isGamePaused = false  // 檢查是否暫停
+
+    func createCeiling() {
         ceiling = SKSpriteNode()
         ceiling.size = CGSize(width: 1534, height: 104)
-        ceiling.position = CGPoint(x: 384, y: 1140)
+        ceiling.position = CGPoint(x: 384, y: 1280)
         ceiling.zPosition = 0
-        ceiling.name = "ceiling"
         addChild(ceiling)
-        
-        ceiling.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 1534, height: 104))
-        ceiling.physicsBody?.affectedByGravity = false
+        ceiling.name = "ceiling"
+
+        ceiling.physicsBody = SKPhysicsBody(
+            rectangleOf: CGSize(width: 1534, height: 104))
+        ceiling.physicsBody?.isDynamic = false
     }
-    
+
     func createGround() {
         ground = SKSpriteNode(imageNamed: "ground.png")
         ground.size = CGSize(width: 1534, height: 104)
         ground.position = CGPoint(x: 384, y: 52)
         ground.zPosition = 0
-        ground.name = "ground"
         addChild(ground)
-        
-        ground.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 1534, height: 104))
-        ground.physicsBody?.affectedByGravity = false
+        ground.name = "ground"
+
+        ground.physicsBody = SKPhysicsBody(
+            rectangleOf: CGSize(width: 1534, height: 104))
+        ground.physicsBody?.isDynamic = false
     }
-    
-    func createTitle(){
+
+    func createTitle() {
         title = SKLabelNode(fontNamed: "Impact")
         title.text = "Flappy Bird"
         title.fontColor = UIColor.black
@@ -65,8 +78,8 @@ class GameScene: SKScene {
         title.zPosition = 1
         addChild(title)
     }
-    
-    func createStartButton(){
+
+    func createStartButton() {
         startButton = SKLabelNode(fontNamed: "Impact")
         startButton.text = "Start"
         startButton.fontColor = UIColor.black
@@ -74,11 +87,11 @@ class GameScene: SKScene {
         startButton.fontSize = 72
         startButton.position = CGPoint(x: 384, y: 512)
         startButton.zPosition = 1
-        startButton.name = "Start"
         addChild(startButton)
+        startButton.name = "Start"
     }
-    
-    func createScoreButton(){
+
+    func createScoreButton() {
         scoreButton = SKLabelNode(fontNamed: "Impact")
         scoreButton.text = "Score"
         scoreButton.fontColor = UIColor.black
@@ -86,11 +99,11 @@ class GameScene: SKScene {
         scoreButton.fontSize = 72
         scoreButton.position = CGPoint(x: 384, y: 372)
         scoreButton.zPosition = 1
-        scoreButton.name = "Score"
         addChild(scoreButton)
+        scoreButton.name = "Score"
     }
-    
-    func createScore(){
+
+    func createScore() {
         gameScore = SKLabelNode(fontNamed: "Impact")
         gameScore.fontColor = UIColor.black
         gameScore.horizontalAlignmentMode = .center
@@ -100,87 +113,130 @@ class GameScene: SKScene {
         addChild(gameScore)
         score = 0
     }
-    
-    func createBird(){
+
+    func createBird() {
         birdTextureAtlas = SKTextureAtlas(named: "bird")
-        for i in 1...birdTextureAtlas.textureNames.count{
-            var name = "bird-\(i)"
+        for i in 1...birdTextureAtlas.textureNames.count {
+            let name = "bird-\(i).png"
             birdTextureArray.append(SKTexture(imageNamed: name))
         }
-        
-        bird = SKSpriteNode(imageNamed: birdTextureAtlas.textureNames[0])
+
+        bird = SKSpriteNode(imageNamed: birdTextureAtlas.textureNames[1])
         bird.size = CGSize(width: 105, height: 90.75)
         bird.position = CGPoint(x: 336, y: 512)
         bird.zPosition = 0
-        bird.name = "bird"
         addChild(bird)
-        
-        ground.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 105, height: 90.75))
-        ground.physicsBody?.affectedByGravity = false
-        
-        // bird.run(SKAction.repeatForever(SKAction.animate(withNormalTextures: birdTextureArray, timePerFrame: 0.2)))
+        bird.name = "bird"
+
+        bird.physicsBody = SKPhysicsBody(
+            rectangleOf: CGSize(width: 105, height: 90.75))
+        bird.physicsBody?.isDynamic = false
+        bird.physicsBody?.allowsRotation = false
+
+        bird.run(SKAction.repeatForever(SKAction.animate(withNormalTextures: birdTextureArray, timePerFrame: 0.1)))
     }
-    
+
+    func createHintTitle() {
+        hintTitle = SKLabelNode(fontNamed: "Impact")
+        hintTitle.text = "Tab to Start!"
+        hintTitle.fontColor = UIColor.black
+        hintTitle.horizontalAlignmentMode = .center
+        hintTitle.fontSize = 72
+        hintTitle.position = CGPoint(x: 384, y: 768)
+        hintTitle.zPosition = 1
+        addChild(hintTitle)
+    }
+
+    func createPauseButton() {
+        pauseButton = SKLabelNode(fontNamed: "Impact")
+        pauseButton.text = "⏸︎"
+        pauseButton.fontColor = UIColor.black
+        pauseButton.horizontalAlignmentMode = .center
+        pauseButton.fontSize = 72
+        pauseButton.position = CGPoint(x: 36, y: 960)
+        pauseButton.zPosition = 1
+        addChild(pauseButton)
+        pauseButton.name = "Pause"
+    }
+
     override func didMove(to view: SKView) {
-        self.anchorPoint = CGPoint(x:0, y:0)
+        self.anchorPoint = CGPoint(x: 0, y: 0)
         let sky = SKSpriteNode(imageNamed: "sky.png")
         sky.size = CGSize(width: 2048, height: 1024)
         sky.position = CGPoint(x: 512, y: 512)
         sky.blendMode = .replace
         sky.zPosition = -1
         addChild(sky)
-        physicsWorld.gravity = CGVector(dx: 0, dy: -9.8)
-        
+        physicsWorld.gravity = CGVector(dx: 0, dy: -4)
+
         createCeiling()
         createGround()
+
         createTitle()
         createStartButton()
         createScoreButton()
-        
-    }
 
-    func touchDown(atPoint pos: CGPoint) {
-
-    }
-
-    func touchMoved(toPoint pos: CGPoint) {
-
-    }
-
-    func touchUp(atPoint pos: CGPoint) {
-
+        createHintTitle()
+        hintTitle.isHidden = true
+        createScore()
+        gameScore.isHidden = true
+        createPauseButton()
+        pauseButton.isHidden = true
+        pauseButton.isPaused = true
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
-        let nodesAtPoint = nodes(at: location)
-        for case let node as SKSpriteNode in nodesAtPoint {
-            if node.name == "Start" {
-                
-            } else if node.name == "Score" {
-                
-            } else if node.name == "OK" {
-                
-            } else if node.name == "Pause" {
-                
-            } else {
-                
+
+        if isInGame == true {
+            bird.physicsBody?.velocity = CGVector(dx: 0, dy: 240)   // 讓鳥飛
+            if isGameStarted == false {
+                bird.physicsBody?.isDynamic = true  // 讓鳥可以動
+                isGameStarted = true
+                hintTitle.isHidden = true
             }
         }
-        
-    }
 
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        let location = touch.location(in: self)
+        let nodesAtPoint = nodes(at: location)
+        for case let node as SKLabelNode in nodesAtPoint {
+            if node.name == "Start" {
+                isInGame = true
+                
+                createBird()
 
-    }
+                title.isHidden = true
+                startButton.isHidden = true
+                startButton.isPaused = true
+                scoreButton.isHidden = true
+                scoreButton.isPaused = true
 
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+                hintTitle.isHidden = false
+                gameScore.isHidden = false
+                pauseButton.isHidden = false
+                pauseButton.isHidden = false
 
-    }
+            } else if node.name == "Score" {
 
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+            } else if node.name == "Back" {
+                isGameStarted = false
 
+            } else if node.name == "Restart" {
+                isInGame = true
+                isGameStarted = false
+
+            } else if node.name == "Pause" {
+                if isGamePaused == false {
+                    pauseButton.text = "▸"
+                    pauseButton.fontSize = 96
+                    isGamePaused = true
+                } else {
+                    pauseButton.text = "⏸︎"
+                    pauseButton.fontSize = 72
+                    isGamePaused = false
+                }
+            }
+        }
     }
 
     override func update(_ currentTime: TimeInterval) {
