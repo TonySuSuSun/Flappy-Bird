@@ -21,7 +21,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var title: SKLabelNode!  // 遊戲標題(Flappy Bird)
     var startButton: SKLabelNode!  // 開始按鈕(進入遊戲)
-    var scoreButton: SKLabelNode!  // 計分板按鈕(用於看分數紀錄)
+    var settingButton: SKLabelNode!  // 設定介面按鈕(用於更改設定)
 
     var hintTitle: SKLabelNode!  // 提示點擊開始遊戲的字(Tab to Start!)
     var pauseButton: SKLabelNode!  // 暫停按鈕
@@ -45,6 +45,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func collisionBetween (bird: SKNode, object: SKNode) {
         if object.name == "ground" {
+            isInGame = false
+            
+            gameScore.isHidden = true
+            pauseButton.isHidden = true
+            pauseButton.isPaused = true
+            
+            showScore.text = "Final Score:\(score)"
+            
+            gameOverTitle.isHidden = false
+            showScore.isHidden = false
+            restartButton.isHidden = false
+            restartButton.isPaused = false
+            backButton.isHidden = false
+            backButton.isPaused = false
+        } else if object.name == "pillar" {
             isInGame = false
             
             gameScore.isHidden = true
@@ -111,16 +126,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         startButton.name = "Start"
     }
 
-    func createScoreButton() {
-        scoreButton = SKLabelNode(fontNamed: "Impact")
-        scoreButton.text = "Score"
-        scoreButton.fontColor = UIColor.black
-        scoreButton.horizontalAlignmentMode = .center
-        scoreButton.fontSize = 72
-        scoreButton.position = CGPoint(x: 384, y: 372)
-        scoreButton.zPosition = 1
-        addChild(scoreButton)
-        scoreButton.name = "Score"
+    func createSettingButton() {
+        settingButton = SKLabelNode(fontNamed: "Impact")
+        settingButton.text = "Setting"
+        settingButton.fontColor = UIColor.black
+        settingButton.horizontalAlignmentMode = .center
+        settingButton.fontSize = 72
+        settingButton.position = CGPoint(x: 384, y: 372)
+        settingButton.zPosition = 1
+        addChild(settingButton)
+        settingButton.name = "Setting"
     }
 
     func createScore() {
@@ -225,6 +240,38 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         backButton.name = "Back"
     }
 
+    func createPillar() {
+        let pillar = SKSpriteNode()
+        pillar.anchorPoint = CGPoint(x: 0.5, y: 0)
+        pillar.position = CGPoint(x: 384, y: 0)
+        pillar.zPosition = 0
+        pillar.name = "pillar"
+        
+        let down = SKSpriteNode(imageNamed: "pillar-green")
+        down.anchorPoint = CGPoint(x: 0.5, y: 0)
+        down.position = CGPoint(x: 0, y: 104)
+        down.size = CGSize(width: 143, height: 352)
+        down.physicsBody = SKPhysicsBody(rectangleOf: down.size)
+        down.physicsBody?.isDynamic = false
+        down.physicsBody?.allowsRotation = false
+        down.physicsBody?.restitution = 0
+        down.physicsBody?.friction = 0
+        pillar.addChild(down)
+        
+        let up = SKSpriteNode(imageNamed: "pillar-green")
+        up.anchorPoint = CGPoint(x: 0.5, y: 1)
+        up.position = CGPoint(x: 0, y: 1024)
+        up.size = CGSize(width: 143, height: 352)
+        up.physicsBody = SKPhysicsBody(rectangleOf: up.size)
+        up.physicsBody?.isDynamic = false
+        up.physicsBody?.allowsRotation = false
+        up.physicsBody?.restitution = 0
+        up.physicsBody?.friction = 0
+        pillar.addChild(up)
+        
+        addChild(pillar)
+    }
+    
     func didBegin (_ contact: SKPhysicsContact ) {
         guard let nodeA = contact.bodyA.node else { return }
         guard let nodeB = contact.bodyB.node else { return }
@@ -253,7 +300,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         createTitle()
         createStartButton()
-        createScoreButton()
+        createSettingButton()
 
         createHintTitle()
         hintTitle.isHidden = true
@@ -273,6 +320,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         createBackButton()
         backButton.isHidden = true
         backButton.isPaused = true
+        
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -284,6 +332,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 bird.physicsBody?.isDynamic = true  // 讓鳥可以動
                 isGameStarted = true
                 hintTitle.isHidden = true
+                pauseButton.isHidden = false
+                pauseButton.isPaused = false
             }
         }
 
@@ -298,15 +348,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 title.isHidden = true
                 startButton.isHidden = true
                 startButton.isPaused = true
-                scoreButton.isHidden = true
-                scoreButton.isPaused = true
+                settingButton.isHidden = true
+                settingButton.isPaused = true
 
                 hintTitle.isHidden = false
                 gameScore.isHidden = false
-                pauseButton.isHidden = false
-                pauseButton.isPaused = false
 
-            } else if node.name == "Score" {
+            } else if node.name == "Setting" {
 
             } else if node.name == "Back" {
                 isGameStarted = false
@@ -323,8 +371,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 title.isHidden = false
                 startButton.isHidden = false
                 startButton.isPaused = false
-                scoreButton.isHidden = false
-                scoreButton.isPaused = false
+                settingButton.isHidden = false
+                settingButton.isPaused = false
                 
             } else if node.name == "Restart" {
                 isInGame = true
@@ -343,8 +391,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 
                 hintTitle.isHidden = false
                 gameScore.isHidden = false
-                pauseButton.isHidden = false
-                pauseButton.isPaused = false
                 
             } else if node.name == "Pause" {
                 if isGamePaused == false {
