@@ -40,7 +40,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     var activePillars = [SKSpriteNode]()
-
+    
     var lastUpdateTime: TimeInterval = 0
     var timeAccumulator: TimeInterval = 0
 
@@ -49,30 +49,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var isGamePaused = false  // 檢查是否暫停
 
     func collisionBetween(bird: SKNode, object: SKNode) {
-        if object.name == "ground" {
-            isInGame = false
-
-            gameScore.isHidden = true
-            pauseButton.isHidden = true
-            pauseButton.isPaused = true
-
-            showScore.text = "Final Score:\(score)"
-
-            gameOverTitle.isHidden = false
-            showScore.isHidden = false
-            restartButton.isHidden = false
-            restartButton.isPaused = false
-            backButton.isHidden = false
-            backButton.isPaused = false
-
-            if activePillars.count > 0 {
-                for (_, node) in activePillars.enumerated().reversed() {
-                    for child in node.children {
-                        child.physicsBody?.isDynamic = false
-                    }
-                }
-            }
-        } else if object.name == "pillar" {
+        if object.name == "ground" || object.name == "pillar" {
             isInGame = false
 
             gameScore.isHidden = true
@@ -190,6 +167,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         bird.physicsBody = SKPhysicsBody(
             rectangleOf: bird.size)
+        bird.physicsBody?.mass = 1
         bird.physicsBody?.isDynamic = false
         bird.physicsBody?.allowsRotation = false
         bird.physicsBody?.contactTestBitMask =
@@ -276,7 +254,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let pillar = SKSpriteNode()
         pillar.anchorPoint = CGPoint(x: 0.5, y: 0)
         pillar.position = CGPoint(x: 896, y: 0)
-        pillar.name = "pillar"
+        pillar.zPosition = 0
 
         let randomHeight = Int.random(in: -20...20)
 
@@ -285,9 +263,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         up.position = CGPoint(x: 0, y: 1228)
         up.zPosition = 0
         up.size = CGSize(width: 143, height: 556 + randomHeight * 10)
-        up.physicsBody = SKPhysicsBody(rectangleOf: up.size)
+        up.name = "pillar"
+        up.physicsBody = SKPhysicsBody(rectangleOf: up.size, center: CGPoint(x: 0, y: -up.size.height / 2))
         up.physicsBody?.affectedByGravity = false
         up.physicsBody?.allowsRotation = false
+        up.physicsBody?.mass = 1000
         up.physicsBody?.friction = 0.0
         up.physicsBody?.linearDamping = 0.0
         up.physicsBody?.categoryBitMask = 0b0010
@@ -299,9 +279,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         down.position = CGPoint(x: 0, y: 104)
         down.zPosition = 0
         down.size = CGSize(width: 143, height: 352 - randomHeight * 10)
-        down.physicsBody = SKPhysicsBody(rectangleOf: down.size)
+        down.name = "pillar"
+        down.physicsBody = SKPhysicsBody(rectangleOf: down.size, center: CGPoint(x: 0, y: down.size.height / 2))
         down.physicsBody?.affectedByGravity = false
         down.physicsBody?.allowsRotation = false
+        down.physicsBody?.mass = 1000
         down.physicsBody?.friction = 0.0
         down.physicsBody?.linearDamping = 0.0
         down.physicsBody?.categoryBitMask = 0b0010
@@ -315,7 +297,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         activePillars.append(pillar)
 
     }
-
+    
+    
     func didBegin(_ contact: SKPhysicsContact) {
         guard let nodeA = contact.bodyA.node else { return }
         guard let nodeB = contact.bodyB.node else { return }
@@ -419,8 +402,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
                 if activePillars.count > 0 {
                     for (index, node) in activePillars.enumerated().reversed() {
-                        node.name = ""
-                        node.removeAllActions()
                         node.removeFromParent()
                         activePillars.remove(at: index)
                     }
@@ -448,8 +429,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
                 if activePillars.count > 0 {
                     for (index, node) in activePillars.enumerated().reversed() {
-                        node.name = ""
-                        node.removeAllActions()
                         node.removeFromParent()
                         activePillars.remove(at: index)
                     }
@@ -478,12 +457,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if activePillars.count > 0 {
             for (index, node) in activePillars.enumerated().reversed() {
                 if node.position.x < -72 {
-                    node.name = ""
-                    node.removeAllActions()
                     node.removeFromParent()
                     activePillars.remove(at: index)
-                } else if node.position.x > 334 && node.position.x < 338 {
-                    score += 1
                 }
             }
         }
