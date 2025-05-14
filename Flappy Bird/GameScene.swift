@@ -26,7 +26,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var hintTitle: SKLabelNode!  // 提示點擊開始遊戲的字(Tab to Start!)
     var pauseButton: SKLabelNode!  // 暫停按鈕
 
-    var gameOverTitle: SKLabelNode! // 顯示遊戲結束(Game Over!)
+    var gameOverTitle: SKLabelNode!  // 顯示遊戲結束(Game Over!)
     var showScore: SKLabelNode!  // 遊戲結束時顯示分數
     var restartButton: SKLabelNode!  // 重新開始遊戲的按鈕
     var backButton: SKLabelNode!  // 返回主頁面的按鈕
@@ -39,44 +39,65 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+    var activePillars = [SKSpriteNode]()
+
+    var lastUpdateTime: TimeInterval = 0
+    var timeAccumulator: TimeInterval = 0
+
     var isGameStarted = false  // 檢查遊戲是否已經開始
     var isInGame = false  // 檢查是否在遊戲內
     var isGamePaused = false  // 檢查是否暫停
 
-    func collisionBetween (bird: SKNode, object: SKNode) {
+    func collisionBetween(bird: SKNode, object: SKNode) {
         if object.name == "ground" {
             isInGame = false
-            
+
             gameScore.isHidden = true
             pauseButton.isHidden = true
             pauseButton.isPaused = true
-            
+
             showScore.text = "Final Score:\(score)"
-            
+
             gameOverTitle.isHidden = false
             showScore.isHidden = false
             restartButton.isHidden = false
             restartButton.isPaused = false
             backButton.isHidden = false
             backButton.isPaused = false
+
+            if activePillars.count > 0 {
+                for (_, node) in activePillars.enumerated().reversed() {
+                    for child in node.children {
+                        child.physicsBody?.isDynamic = false
+                    }
+                }
+            }
         } else if object.name == "pillar" {
             isInGame = false
-            
+
             gameScore.isHidden = true
             pauseButton.isHidden = true
             pauseButton.isPaused = true
-            
+
             showScore.text = "Final Score:\(score)"
-            
+
             gameOverTitle.isHidden = false
             showScore.isHidden = false
             restartButton.isHidden = false
             restartButton.isPaused = false
             backButton.isHidden = false
             backButton.isPaused = false
+
+            if activePillars.count > 0 {
+                for (_, node) in activePillars.enumerated().reversed() {
+                    for child in node.children {
+                        child.physicsBody?.isDynamic = false
+                    }
+                }
+            }
         }
     }
-    
+
     func createCeiling() {
         ceiling = SKSpriteNode()
         ceiling.size = CGSize(width: 1534, height: 104)
@@ -88,6 +109,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ceiling.physicsBody = SKPhysicsBody(
             rectangleOf: ceiling.size)
         ceiling.physicsBody?.isDynamic = false
+        ceiling.physicsBody?.categoryBitMask = 0b0010
+        ceiling.physicsBody?.collisionBitMask = 0b0001
     }
 
     func createGround() {
@@ -101,6 +124,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ground.physicsBody = SKPhysicsBody(
             rectangleOf: ground.size)
         ground.physicsBody?.isDynamic = false
+        ground.physicsBody?.categoryBitMask = 0b0010
+        ground.physicsBody?.collisionBitMask = 0b0001
     }
 
     func createTitle() {
@@ -167,9 +192,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             rectangleOf: bird.size)
         bird.physicsBody?.isDynamic = false
         bird.physicsBody?.allowsRotation = false
-        bird.physicsBody?.contactTestBitMask = bird.physicsBody?.collisionBitMask ?? UInt32.max
+        bird.physicsBody?.contactTestBitMask =
+            bird.physicsBody?.collisionBitMask ?? UInt32.max
 
-        bird.run(SKAction.repeatForever(SKAction.animate(withNormalTextures: birdTextureArray, timePerFrame: 0.1)))
+        bird.physicsBody?.categoryBitMask = 0b0001
+        bird.physicsBody?.collisionBitMask = 0b0010
+
+        bird.run(
+            SKAction.repeatForever(
+                SKAction.animate(
+                    withNormalTextures: birdTextureArray, timePerFrame: 0.1)))
     }
 
     func createHintTitle() {
@@ -194,7 +226,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(pauseButton)
         pauseButton.name = "Pause"
     }
-    
+
     func createGameOverTitle() {
         gameOverTitle = SKLabelNode(fontNamed: "Impact")
         gameOverTitle.text = "Game Over!"
@@ -205,7 +237,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         gameOverTitle.zPosition = 1
         addChild(gameOverTitle)
     }
-    
+
     func createShowScore() {
         showScore = SKLabelNode(fontNamed: "Impact")
         showScore.fontColor = UIColor.black
@@ -215,7 +247,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         showScore.zPosition = 1
         addChild(showScore)
     }
-    
+
     func createRestartButton() {
         restartButton = SKLabelNode(fontNamed: "Impact")
         restartButton.text = "Restart"
@@ -227,7 +259,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(restartButton)
         restartButton.name = "Restart"
     }
-    
+
     func createBackButton() {
         backButton = SKLabelNode(fontNamed: "Impact")
         backButton.text = "Back to Menu"
@@ -243,49 +275,61 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func createPillar() {
         let pillar = SKSpriteNode()
         pillar.anchorPoint = CGPoint(x: 0.5, y: 0)
-        pillar.position = CGPoint(x: 384, y: 0)
-        pillar.zPosition = 0
+        pillar.position = CGPoint(x: 896, y: 0)
         pillar.name = "pillar"
-        
+
+        let randomHeight = Int.random(in: -20...20)
+
+        let up = SKSpriteNode(imageNamed: "pillar-green")
+        up.anchorPoint = CGPoint(x: 0.5, y: 1)
+        up.position = CGPoint(x: 0, y: 1228)
+        up.zPosition = 0
+        up.size = CGSize(width: 143, height: 556 + randomHeight * 10)
+        up.physicsBody = SKPhysicsBody(rectangleOf: up.size)
+        up.physicsBody?.affectedByGravity = false
+        up.physicsBody?.allowsRotation = false
+        up.physicsBody?.friction = 0.0
+        up.physicsBody?.linearDamping = 0.0
+        up.physicsBody?.categoryBitMask = 0b0010
+        up.physicsBody?.collisionBitMask = 0b0001
+        pillar.addChild(up)
+
         let down = SKSpriteNode(imageNamed: "pillar-green")
         down.anchorPoint = CGPoint(x: 0.5, y: 0)
         down.position = CGPoint(x: 0, y: 104)
-        down.size = CGSize(width: 143, height: 352)
+        down.zPosition = 0
+        down.size = CGSize(width: 143, height: 352 - randomHeight * 10)
         down.physicsBody = SKPhysicsBody(rectangleOf: down.size)
-        down.physicsBody?.isDynamic = false
+        down.physicsBody?.affectedByGravity = false
         down.physicsBody?.allowsRotation = false
-        down.physicsBody?.restitution = 0
-        down.physicsBody?.friction = 0
+        down.physicsBody?.friction = 0.0
+        down.physicsBody?.linearDamping = 0.0
+        down.physicsBody?.categoryBitMask = 0b0010
+        down.physicsBody?.collisionBitMask = 0b0001
         pillar.addChild(down)
-        
-        let up = SKSpriteNode(imageNamed: "pillar-green")
-        up.anchorPoint = CGPoint(x: 0.5, y: 1)
-        up.position = CGPoint(x: 0, y: 1024)
-        up.size = CGSize(width: 143, height: 352)
-        up.physicsBody = SKPhysicsBody(rectangleOf: up.size)
-        up.physicsBody?.isDynamic = false
-        up.physicsBody?.allowsRotation = false
-        up.physicsBody?.restitution = 0
-        up.physicsBody?.friction = 0
-        pillar.addChild(up)
-        
+
+        up.physicsBody?.velocity = CGVector(dx: -120, dy: 0)
+        down.physicsBody?.velocity = CGVector(dx: -120, dy: 0)
+
         addChild(pillar)
+        activePillars.append(pillar)
+
     }
-    
-    func didBegin (_ contact: SKPhysicsContact ) {
+
+    func didBegin(_ contact: SKPhysicsContact) {
         guard let nodeA = contact.bodyA.node else { return }
         guard let nodeB = contact.bodyB.node else { return }
         if nodeA.name == "bird" {
-            collisionBetween (bird: nodeA, object: nodeB)
+            collisionBetween(bird: nodeA, object: nodeB)
         } else if nodeB.name == "bird" {
-            collisionBetween (bird: nodeB, object: nodeA)
+            collisionBetween(bird: nodeB, object: nodeA)
         }
     }
-    
+
     override func didMove(to view: SKView) {
-        
+
         physicsWorld.contactDelegate = self
-        
+
         self.anchorPoint = CGPoint(x: 0, y: 0)
         let sky = SKSpriteNode(imageNamed: "sky.png")
         sky.size = CGSize(width: 2048, height: 1024)
@@ -309,7 +353,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         createPauseButton()
         pauseButton.isHidden = true
         pauseButton.isPaused = true
-        
+
         createGameOverTitle()
         gameOverTitle.isHidden = true
         createShowScore()
@@ -320,14 +364,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         createBackButton()
         backButton.isHidden = true
         backButton.isPaused = true
-        
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
 
         if isInGame == true {
-            bird.physicsBody?.velocity = CGVector(dx: 0, dy: 240)   // 讓鳥飛
+            bird.physicsBody?.velocity = CGVector(dx: 0, dy: 240)  // 讓鳥飛
             if isGameStarted == false {
                 bird.physicsBody?.isDynamic = true  // 讓鳥可以動
                 isGameStarted = true
@@ -342,7 +385,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         for case let node as SKLabelNode in nodesAtPoint {
             if node.name == "Start" {
                 isInGame = true
-                
+
                 createBird()
 
                 title.isHidden = true
@@ -358,53 +401,73 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
             } else if node.name == "Back" {
                 isGameStarted = false
-                
+
                 bird.removeFromParent()
-                
+
                 gameOverTitle.isHidden = true
                 showScore.isHidden = true
                 restartButton.isHidden = true
                 restartButton.isPaused = true
                 backButton.isHidden = true
                 backButton.isPaused = true
-                
+
                 title.isHidden = false
                 startButton.isHidden = false
                 startButton.isPaused = false
                 settingButton.isHidden = false
                 settingButton.isPaused = false
-                
+
+                if activePillars.count > 0 {
+                    for (index, node) in activePillars.enumerated().reversed() {
+                        node.name = ""
+                        node.removeAllActions()
+                        node.removeFromParent()
+                        activePillars.remove(at: index)
+                    }
+                }
+
+                score = 0
+
             } else if node.name == "Restart" {
                 isInGame = true
                 isGameStarted = false
-                
+
                 bird.removeFromParent()
-                
+
                 gameOverTitle.isHidden = true
                 showScore.isHidden = true
                 restartButton.isHidden = true
                 restartButton.isPaused = true
                 backButton.isHidden = true
                 backButton.isPaused = true
-                
+
                 createBird()
-                
+
                 hintTitle.isHidden = false
                 gameScore.isHidden = false
-                
+
+                if activePillars.count > 0 {
+                    for (index, node) in activePillars.enumerated().reversed() {
+                        node.name = ""
+                        node.removeAllActions()
+                        node.removeFromParent()
+                        activePillars.remove(at: index)
+                    }
+                }
+
+                score = 0
+
             } else if node.name == "Pause" {
                 if isGamePaused == false {
                     pauseButton.text = "▸"
                     pauseButton.fontSize = 96
                     isGamePaused = true
-                    bird.physicsBody?.isDynamic = false
+                    physicsWorld.speed = 0
                 } else {
                     pauseButton.text = "⏸︎"
                     pauseButton.fontSize = 72
                     isGamePaused = false
-                    if isGameStarted == true {
-                        bird.physicsBody?.isDynamic = true
-                    }
+                    physicsWorld.speed = 1
                 }
             }
         }
@@ -412,11 +475,41 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     override func update(_ currentTime: TimeInterval) {
 
+        if activePillars.count > 0 {
+            for (index, node) in activePillars.enumerated().reversed() {
+                if node.position.x < -72 {
+                    node.name = ""
+                    node.removeAllActions()
+                    node.removeFromParent()
+                    activePillars.remove(at: index)
+                } else if node.position.x > 334 && node.position.x < 338 {
+                    score += 1
+                }
+            }
+        }
+
+        if isGameStarted && isInGame && !isGamePaused {
+            // 計算 deltaTime
+            if lastUpdateTime == 0 {
+                lastUpdateTime = currentTime
+            }
+            let deltaTime = currentTime - lastUpdateTime
+            lastUpdateTime = currentTime
+
+            // 累加時間
+            timeAccumulator += deltaTime
+
+            // 每到達指定間隔就觸發事件
+            if timeAccumulator >= 4 {
+                timeAccumulator = 0  // 重設累計時間
+                createPillar()
+            }
+        }
     }
 }
 
 struct GameView: View {
-    var scene: SKScene{
+    var scene: SKScene {
         let scene = GameScene(size: CGSize(width: 768, height: 1024))
         scene.scaleMode = .aspectFit
         return scene
