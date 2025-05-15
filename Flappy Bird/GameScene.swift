@@ -40,7 +40,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     var activePillars = [SKSpriteNode]()
-    
+
+    var scoreSensor: SKSpriteNode!
+
     var lastUpdateTime: TimeInterval = 0
     var timeAccumulator: TimeInterval = 0
 
@@ -64,7 +66,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             restartButton.isPaused = false
             backButton.isHidden = false
             backButton.isPaused = false
-            
+
+            lastUpdateTime = 0
+            timeAccumulator = 0
+
             bird.removeAction(forKey: "flying")
 
             if activePillars.count > 0 {
@@ -181,7 +186,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         bird.run(
             SKAction.repeatForever(
                 SKAction.animate(
-                    with: birdTextureArray, timePerFrame: 0.1)), withKey: "flying")
+                    with: birdTextureArray, timePerFrame: 0.1)),
+            withKey: "flying")
     }
 
     func createHintTitle() {
@@ -266,14 +272,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         up.zPosition = 0
         up.size = CGSize(width: 143, height: 556 + randomHeight * 10)
         up.name = "pillar"
-        up.physicsBody = SKPhysicsBody(rectangleOf: up.size, center: CGPoint(x: 0, y: -up.size.height / 2))
+        up.physicsBody = SKPhysicsBody(
+            rectangleOf: up.size, center: CGPoint(x: 0, y: -up.size.height / 2))
         up.physicsBody?.affectedByGravity = false
         up.physicsBody?.allowsRotation = false
         up.physicsBody?.mass = 1000
         up.physicsBody?.friction = 0.0
         up.physicsBody?.linearDamping = 0.0
         up.physicsBody?.categoryBitMask = 0b0010
-        up.physicsBody?.collisionBitMask = 0b0001
+        up.physicsBody?.collisionBitMask = 0
+        up.physicsBody?.contactTestBitMask = 0b0001
         pillar.addChild(up)
 
         let down = SKSpriteNode(imageNamed: "pillar-green")
@@ -282,14 +290,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         down.zPosition = 0
         down.size = CGSize(width: 143, height: 352 - randomHeight * 10)
         down.name = "pillar"
-        down.physicsBody = SKPhysicsBody(rectangleOf: down.size, center: CGPoint(x: 0, y: down.size.height / 2))
+        down.physicsBody = SKPhysicsBody(
+            rectangleOf: down.size,
+            center: CGPoint(x: 0, y: down.size.height / 2))
         down.physicsBody?.affectedByGravity = false
         down.physicsBody?.allowsRotation = false
         down.physicsBody?.mass = 1000
         down.physicsBody?.friction = 0.0
         down.physicsBody?.linearDamping = 0.0
         down.physicsBody?.categoryBitMask = 0b0010
-        down.physicsBody?.collisionBitMask = 0b0001
+        down.physicsBody?.collisionBitMask = 0
+        down.physicsBody?.contactTestBitMask = 0b0001
         pillar.addChild(down)
 
         up.physicsBody?.velocity = CGVector(dx: -120, dy: 0)
@@ -299,8 +310,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         activePillars.append(pillar)
 
     }
-    
-    
+
+    func createScoreSensor() {
+        scoreSensor = SKSpriteNode()
+        scoreSensor.size = CGSize(width: 1, height: 800)
+        scoreSensor.position = CGPoint(x: 336, y: 512)
+        scoreSensor.physicsBody = SKPhysicsBody(rectangleOf: scoreSensor.size)
+        scoreSensor.physicsBody?.isDynamic = false
+        scoreSensor.physicsBody?.categoryBitMask = 0b0001
+        scoreSensor.physicsBody?.contactTestBitMask = 0b0010
+        scoreSensor.physicsBody?.collisionBitMask = 0
+        scoreSensor.name = "scoreSensor"
+        addChild(scoreSensor)
+    }
+
     func didBegin(_ contact: SKPhysicsContact) {
         guard let nodeA = contact.bodyA.node else { return }
         guard let nodeB = contact.bodyB.node else { return }
@@ -308,6 +331,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             collisionBetween(bird: nodeA, object: nodeB)
         } else if nodeB.name == "bird" {
             collisionBetween(bird: nodeB, object: nodeA)
+        } else if nodeA.name == "scoreSencer" || nodeB.name == "scoreSencer" {
+            score += 1
         }
     }
 
@@ -349,6 +374,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         createBackButton()
         backButton.isHidden = true
         backButton.isPaused = true
+
+        createScoreSensor()
+
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -357,6 +385,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if isInGame == true {
             bird.physicsBody?.velocity = CGVector(dx: 0, dy: 240)  // 讓鳥飛
             if isGameStarted == false {
+
+                timeAccumulator = 2
+
                 bird.physicsBody?.isDynamic = true  // 讓鳥可以動
                 isGameStarted = true
                 hintTitle.isHidden = true
@@ -444,11 +475,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     pauseButton.fontSize = 96
                     isGamePaused = true
                     physicsWorld.speed = 0
+                    bird.removeAction(forKey: "flying")
                 } else {
                     pauseButton.text = "⏸︎"
                     pauseButton.fontSize = 72
                     isGamePaused = false
                     physicsWorld.speed = 1
+                    bird.run(
+                        SKAction.repeatForever(
+                            SKAction.animate(
+                                with: birdTextureArray, timePerFrame: 0.1)),
+                        withKey: "flying")
                 }
             }
         }
@@ -465,7 +502,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
 
-        if isGameStarted && isInGame && !isGamePaused {
+        if isGameStarted && isInGame {
             // 計算 deltaTime
             if lastUpdateTime == 0 {
                 lastUpdateTime = currentTime
@@ -474,7 +511,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             lastUpdateTime = currentTime
 
             // 累加時間
-            timeAccumulator += deltaTime
+            if !isGamePaused {
+                timeAccumulator += deltaTime
+            }
 
             // 每到達指定間隔就觸發事件
             if timeAccumulator >= 4 {
