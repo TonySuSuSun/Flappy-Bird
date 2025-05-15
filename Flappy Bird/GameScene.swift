@@ -56,7 +56,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             pauseButton.isHidden = true
             pauseButton.isPaused = true
 
-            showScore.text = "Final Score:\(score)"
+            showScore.text = "Final Score: \(score)"
 
             gameOverTitle.isHidden = false
             showScore.isHidden = false
@@ -64,6 +64,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             restartButton.isPaused = false
             backButton.isHidden = false
             backButton.isPaused = false
+            
+            bird.removeAction(forKey: "flying")
 
             if activePillars.count > 0 {
                 for (_, node) in activePillars.enumerated().reversed() {
@@ -158,7 +160,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             birdTextureArray.append(SKTexture(imageNamed: name))
         }
 
-        bird = SKSpriteNode(imageNamed: birdTextureAtlas.textureNames[1])
+        bird = SKSpriteNode(imageNamed: birdTextureAtlas.textureNames[0])
         bird.size = CGSize(width: 105, height: 90.75)
         bird.position = CGPoint(x: 336, y: 512)
         bird.zPosition = 0
@@ -179,7 +181,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         bird.run(
             SKAction.repeatForever(
                 SKAction.animate(
-                    withNormalTextures: birdTextureArray, timePerFrame: 0.1)))
+                    with: birdTextureArray, timePerFrame: 0.1)), withKey: "flying")
     }
 
     func createHintTitle() {
