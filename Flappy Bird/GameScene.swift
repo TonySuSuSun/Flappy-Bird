@@ -31,6 +31,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var restartButton: SKLabelNode!  // 重新開始遊戲的按鈕
     var backButton: SKLabelNode!  // 返回主頁面的按鈕
 
+    
+    
     // 遊玩分數
     var gameScore: SKLabelNode!
     var score = 0 {
@@ -40,16 +42,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     var activePillars = [SKSpriteNode]()
-
-    var scoreSensor: SKSpriteNode!
+    
+    var pillarColors: [String] = ["red", "yellow", "green", "blue", "purple", "gray"]
+    var pillarColor: String = "green"
 
     var lastUpdateTime: TimeInterval = 0
     var timeAccumulator: TimeInterval = 0
+    var scoreAccumulator: TimeInterval = 0
 
     var isGameStarted = false  // 檢查遊戲是否已經開始
     var isInGame = false  // 檢查是否在遊戲內
     var isGamePaused = false  // 檢查是否暫停
-
+    
     func collisionBetween(bird: SKNode, object: SKNode) {
         if object.name == "ground" || object.name == "pillar" {
             isInGame = false
@@ -69,6 +73,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
             lastUpdateTime = 0
             timeAccumulator = 0
+            scoreAccumulator = 0
 
             bird.removeAction(forKey: "flying")
 
@@ -266,7 +271,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let randomHeight = Int.random(in: -20...20)
 
-        let up = SKSpriteNode(imageNamed: "pillar-green")
+        let up = SKSpriteNode(imageNamed: "pillar-\(pillarColor)")
         up.anchorPoint = CGPoint(x: 0.5, y: 1)
         up.position = CGPoint(x: 0, y: 1228)
         up.zPosition = 0
@@ -284,7 +289,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         up.physicsBody?.contactTestBitMask = 0b0001
         pillar.addChild(up)
 
-        let down = SKSpriteNode(imageNamed: "pillar-green")
+        let down = SKSpriteNode(imageNamed: "pillar-\(pillarColor)")
         down.anchorPoint = CGPoint(x: 0.5, y: 0)
         down.position = CGPoint(x: 0, y: 104)
         down.zPosition = 0
@@ -311,19 +316,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     }
 
-    func createScoreSensor() {
-        scoreSensor = SKSpriteNode()
-        scoreSensor.size = CGSize(width: 1, height: 800)
-        scoreSensor.position = CGPoint(x: 336, y: 512)
-        scoreSensor.physicsBody = SKPhysicsBody(rectangleOf: scoreSensor.size)
-        scoreSensor.physicsBody?.isDynamic = false
-        scoreSensor.physicsBody?.categoryBitMask = 0b0001
-        scoreSensor.physicsBody?.contactTestBitMask = 0b0010
-        scoreSensor.physicsBody?.collisionBitMask = 0
-        scoreSensor.name = "scoreSensor"
-        addChild(scoreSensor)
-    }
-
     func didBegin(_ contact: SKPhysicsContact) {
         guard let nodeA = contact.bodyA.node else { return }
         guard let nodeB = contact.bodyB.node else { return }
@@ -331,8 +323,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             collisionBetween(bird: nodeA, object: nodeB)
         } else if nodeB.name == "bird" {
             collisionBetween(bird: nodeB, object: nodeA)
-        } else if nodeA.name == "scoreSencer" || nodeB.name == "scoreSencer" {
-            score += 1
         }
     }
 
@@ -374,9 +364,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         createBackButton()
         backButton.isHidden = true
         backButton.isPaused = true
-
-        createScoreSensor()
-
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -387,6 +374,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if isGameStarted == false {
 
                 timeAccumulator = 2
+                scoreAccumulator = -2.5
 
                 bird.physicsBody?.isDynamic = true  // 讓鳥可以動
                 isGameStarted = true
@@ -414,7 +402,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 gameScore.isHidden = false
 
             } else if node.name == "Setting" {
-
+                /*
+                title.isHidden = true
+                startButton.isHidden = true
+                startButton.isPaused = true
+                settingButton.isHidden = true
+                settingButton.isPaused = true
+                */
+                
+                
+                
             } else if node.name == "Back" {
                 isGameStarted = false
 
@@ -513,12 +510,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             // 累加時間
             if !isGamePaused {
                 timeAccumulator += deltaTime
+                scoreAccumulator += deltaTime
             }
 
             // 每到達指定間隔就觸發事件
             if timeAccumulator >= 4 {
                 timeAccumulator = 0  // 重設累計時間
                 createPillar()
+            }
+            if scoreAccumulator >= 4 {
+                scoreAccumulator = 0  // 重設累計時間
+                score += 1
             }
         }
     }
