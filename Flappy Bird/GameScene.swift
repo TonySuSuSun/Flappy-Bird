@@ -18,42 +18,43 @@ extension UIColor {
             "green": .green,
             "blue": .blue,
             "purple": .purple,
-            "gray": .gray
+            "gray": .gray,
         ]
-        let cleanedName = name.replacingOccurrences(of: " ", with: "").lowercased()
+        let cleanedName = name.replacingOccurrences(of: " ", with: "")
+            .lowercased()
         return allColors[cleanedName]
     }
 }
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
-    var ceiling: SKSpriteNode!      // 天花板(隱形的)
-    var ground: SKSpriteNode!       // 地板
-    var bird: SKSpriteNode!         // 鳥
+    var ceiling: SKSpriteNode!  // 天花板(隱形的)
+    var ground: SKSpriteNode!  // 地板
+    var bird: SKSpriteNode!  // 鳥
 
     // 鳥的動畫素材
     var birdTextureAtlas = SKTextureAtlas()
     var birdTextureArray = [SKTexture]()
 
-    var title: SKLabelNode!         // 遊戲標題(Flappy Bird)
-    var startButton: SKLabelNode!   // 開始按鈕(進入遊戲)
-    var settingButton: SKLabelNode! // 設定介面按鈕(用於更改設定)
+    var title: SKLabelNode!  // 遊戲標題(Flappy Bird)
+    var startButton: SKLabelNode!  // 開始按鈕(進入遊戲)
+    var settingButton: SKLabelNode!  // 設定介面按鈕(用於更改設定)
 
-    var hintTitle: SKLabelNode!     // 提示點擊開始遊戲的字(Tab to Start!)
-    var pauseButton: SKLabelNode!   // 暫停按鈕
+    var hintTitle: SKLabelNode!  // 提示點擊開始遊戲的字(Tab to Start!)
+    var pauseButton: SKLabelNode!  // 暫停按鈕
 
-    var gameOverTitle: SKLabelNode! // 顯示遊戲結束(Game Over!)
-    var showScore: SKLabelNode!     // 遊戲結束時顯示分數
-    var restartButton: SKLabelNode! // 重新開始遊戲的按鈕
-    var backButton: SKLabelNode!    // 返回主頁面的按鈕
+    var gameOverTitle: SKLabelNode!  // 顯示遊戲結束(Game Over!)
+    var showScore: SKLabelNode!  // 遊戲結束時顯示分數
+    var restartButton: SKLabelNode!  // 重新開始遊戲的按鈕
+    var backButton: SKLabelNode!  // 返回主頁面的按鈕
 
     var settingTitle: SKLabelNode!  // 設定介面標題
     var colorSetting: SKLabelNode!  // 顯示更改顏色
-    var leftArrow: SKLabelNode!     // 左箭頭
-    var colorChosen: SKLabelNode!   // 顯示顏色選擇
-    var rightArrow: SKLabelNode!    // 右箭頭
+    var leftArrow: SKLabelNode!  // 左箭頭
+    var colorChosen: SKLabelNode!  // 顯示顏色選擇
+    var rightArrow: SKLabelNode!  // 右箭頭
     var returnButton: SKLabelNode!  // 返回主頁面
-    
+
     // 遊玩分數
     var gameScore: SKLabelNode!
     var score = 0 {
@@ -63,10 +64,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     var activePillars = [SKSpriteNode]()
-    
+
     var colorCode: Int = 2
-    var pillarColors: [String] = ["red", "yellow", "green", "blue", "purple", "gray"]
-    
+    var pillarColors: [String] = [
+        "red", "yellow", "green", "blue", "purple", "gray",
+    ]
+
     var lastUpdateTime: TimeInterval = 0
     var timeAccumulator: TimeInterval = 0
     var scoreAccumulator: TimeInterval = 0
@@ -74,7 +77,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var isGameStarted = false  // 檢查遊戲是否已經開始
     var isInGame = false  // 檢查是否在遊戲內
     var isGamePaused = false  // 檢查是否暫停
-    
+
     func collisionBetween(bird: SKNode, object: SKNode) {
         if object.name == "ground" || object.name == "pillar" {
             isInGame = false
@@ -294,7 +297,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         settingTitle.zPosition = 1
         addChild(settingTitle)
     }
-    
+
     func createColorSetting() {
         colorSetting = SKLabelNode(fontNamed: "Impact")
         colorSetting.text = "Pillars' color:"
@@ -305,7 +308,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         colorSetting.zPosition = 1
         addChild(colorSetting)
     }
-    
+
     func createColorChosen() {
         colorChosen = SKLabelNode(fontNamed: "Impact")
         colorChosen.text = pillarColors[colorCode]
@@ -316,7 +319,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         colorChosen.zPosition = 1
         addChild(colorChosen)
     }
-    
+
     func createLeftArrow() {
         leftArrow = SKLabelNode(fontNamed: "Impact")
         leftArrow.text = "⭠"
@@ -328,7 +331,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(leftArrow)
         leftArrow.name = "Left"
     }
-    
+
     func createRightArrow() {
         rightArrow = SKLabelNode(fontNamed: "Impact")
         rightArrow.text = "⭢"
@@ -340,7 +343,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(rightArrow)
         rightArrow.name = "Right"
     }
-    
+
     func createReturnButton() {
         returnButton = SKLabelNode(fontNamed: "Impact")
         returnButton.text = "Return"
@@ -352,7 +355,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(returnButton)
         returnButton.name = "Return"
     }
-    
+
     func createPillar() {
         let pillar = SKSpriteNode()
         pillar.anchorPoint = CGPoint(x: 0.5, y: 0)
@@ -454,7 +457,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         createBackButton()
         backButton.isHidden = true
         backButton.isPaused = true
-        
+
         createSettingTitle()
         settingTitle.isHidden = true
         createColorSetting()
@@ -513,7 +516,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 startButton.isPaused = true
                 settingButton.isHidden = true
                 settingButton.isPaused = true
-                
+
                 settingTitle.isHidden = false
                 colorSetting.isHidden = false
                 colorChosen.isHidden = false
@@ -523,7 +526,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 rightArrow.isPaused = false
                 returnButton.isHidden = false
                 returnButton.isPaused = false
-                
+
             } else if node.name == "Back" {
                 isGameStarted = false
 
@@ -602,7 +605,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 startButton.isPaused = false
                 settingButton.isHidden = false
                 settingButton.isPaused = false
-                
+
                 settingTitle.isHidden = true
                 colorSetting.isHidden = true
                 colorChosen.isHidden = true
@@ -613,6 +616,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 returnButton.isHidden = true
                 returnButton.isPaused = true
             } else if node.name == "Left" {
+                if colorCode == 0 {
+                    colorCode = 6
+                }
                 colorCode = (colorCode - 1) % 6
                 colorChosen.text = pillarColors[colorCode]
                 colorChosen.fontColor = UIColor().named(pillarColors[colorCode])
