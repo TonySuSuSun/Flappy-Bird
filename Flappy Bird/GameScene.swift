@@ -221,7 +221,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func createHintTitle() {
         hintTitle = SKLabelNode(fontNamed: "Impact")
-        hintTitle.text = "Tab to Start!"
+        hintTitle.text = "Tap to Start!"
         hintTitle.fontColor = UIColor.black
         hintTitle.horizontalAlignmentMode = .center
         hintTitle.fontSize = 72
