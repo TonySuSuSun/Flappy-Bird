@@ -401,8 +401,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         down.physicsBody?.contactTestBitMask = 0b0001
         pillar.addChild(down)
 
-        up.physicsBody?.velocity = CGVector(dx: -120, dy: 0)
-        down.physicsBody?.velocity = CGVector(dx: -120, dy: 0)
+        up.physicsBody?.velocity = CGVector(dx: -180, dy: 0)
+        down.physicsBody?.velocity = CGVector(dx: -180, dy: 0)
 
         addChild(pillar)
         activePillars.append(pillar)
@@ -482,8 +482,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             bird.physicsBody?.velocity = CGVector(dx: 0, dy: 240)  // 讓鳥飛
             if isGameStarted == false {
 
-                timeAccumulator = 2
-                scoreAccumulator = -2.5
+                timeAccumulator = 1
+                scoreAccumulator = -2
 
                 bird.physicsBody?.isDynamic = true  // 讓鳥可以動
                 isGameStarted = true
@@ -656,11 +656,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
 
             // 每到達指定間隔就觸發事件
-            if timeAccumulator >= 4 {
+            if timeAccumulator >= 2.7 {
                 timeAccumulator = 0  // 重設累計時間
                 createPillar()
             }
-            if scoreAccumulator >= 4 {
+            if scoreAccumulator >= 2.7 {
                 scoreAccumulator = 0  // 重設累計時間
                 score += 1
             }
